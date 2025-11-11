@@ -86,11 +86,6 @@ To generate a standalone APK for Android:
 
 ---
 
-## License
-This project is licensed under the MIT License.
-
----
-
 ## Need Help?
 - [Expo Documentation](https://docs.expo.dev/)
 - [Supabase Documentation](https://supabase.com/docs)
