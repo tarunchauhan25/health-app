@@ -21,6 +21,8 @@ const MAPPING = {
   'person.crop.circle.fill': 'person',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chart.bar.fill': 'bar-chart',
+  'waveform.circle.fill': 'waves',
 } as IconMapping;
 
 /**

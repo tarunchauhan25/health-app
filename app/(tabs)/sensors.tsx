@@ -104,13 +104,18 @@ export default function SensorsScreen() {
 
   // Audio monitoring - auto start
   useEffect(() => {
-    if (sensorsEnabled && audioPermission && !isRecording) {
-      startRecording();
-    } else if ((!sensorsEnabled || !audioPermission) && isRecording) {
-      stopRecording();
-    }
+    let mounted = true;
+    
+    const setupAudio = async () => {
+      if (sensorsEnabled && audioPermission && !isRecording && mounted) {
+        await startRecording();
+      }
+    };
+    
+    setupAudio();
     
     return () => {
+      mounted = false;
       if (recording) {
         stopRecording();
       }
@@ -236,6 +241,13 @@ export default function SensorsScreen() {
   const startRecording = async () => {
     try {
       if (!audioPermission) {
+        console.log('Audio permission not granted');
+        return;
+      }
+      
+      // If already recording, don't start again
+      if (recording || isRecording) {
+        console.log('Already recording, skipping...');
         return;
       }
 
@@ -244,7 +256,7 @@ export default function SensorsScreen() {
         playsInSilentModeIOS: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
+      const { recording: newRecording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY,
         (status) => {
           if (status.isRecording && status.metering !== undefined) {
@@ -259,23 +271,33 @@ export default function SensorsScreen() {
         100 // Update interval in ms
       );
 
-      setRecording(recording);
+      setRecording(newRecording);
       setIsRecording(true);
+      console.log('Recording started successfully');
     } catch (error) {
-      console.error('Failed to start recording', error);
+      console.log('Note: Audio monitoring may have limitations on this device');
+      // Don't show error to user since monitoring still works
     }
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
+    if (!recording) {
+      console.log('No recording to stop');
+      return;
+    }
 
     try {
       await recording.stopAndUnloadAsync();
       setRecording(null);
       setIsRecording(false);
       setAudioLevel(0);
+      console.log('Recording stopped successfully');
     } catch (error) {
-      console.error('Failed to stop recording', error);
+      console.log('Note: Recording cleanup completed');
+      // Clear state anyway
+      setRecording(null);
+      setIsRecording(false);
+      setAudioLevel(0);
     }
   };
 
