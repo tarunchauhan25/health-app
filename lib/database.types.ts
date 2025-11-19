@@ -38,6 +38,7 @@ export interface Database {
           text: string
           options: string[]
           allow_custom_answer: boolean
+          category: string | null
           created_at: string
         }
         Insert: {
@@ -45,6 +46,7 @@ export interface Database {
           text: string
           options: string[]
           allow_custom_answer?: boolean
+          category?: string | null
           created_at?: string
         }
         Update: {
@@ -52,6 +54,7 @@ export interface Database {
           text?: string
           options?: string[]
           allow_custom_answer?: boolean
+          category?: string | null
           created_at?: string
         }
       }

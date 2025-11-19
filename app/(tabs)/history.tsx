@@ -48,7 +48,12 @@ export default function HistoryScreen() {
           if (error) throw error;
 
           if (answers && isMounted) {
-            const formattedHistory = (answers as UserAnswer[]).map(answer => ({
+            // Filter out PHQ-9 questions
+            const filteredAnswers = (answers as UserAnswer[]).filter(
+              answer => answer.questions.category !== 'PHQ9'
+            );
+            
+            const formattedHistory = filteredAnswers.map(answer => ({
               question: answer.questions.text,
               answer: answer.custom_answer || answer.selected_option,
               timestamp: answer.created_at

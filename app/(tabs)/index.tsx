@@ -92,21 +92,28 @@ export default function HomeScreen() {
       // We want to keep all user answers, no matter what
       // Just check what questions they've answered so we don't repeat them
 
-      // First get all the answered question IDs for this user
+      // First get all the answered question IDs for this user (excluding PHQ9)
       const { data: answeredQuestions } = await supabase
         .from('user_answers')
-        .select('question_id')
+        .select(`
+          question_id,
+          questions:questions(category)
+        `)
         .eq('user_id', session.user.id);
 
-      const answeredIds = (answeredQuestions || []).map(a => a.question_id);
+      // Filter to only get non-PHQ9 answered questions
+      const answeredNonPHQ9Ids = (answeredQuestions || [])
+        .filter((a: any) => a.questions?.category !== 'PHQ9')
+        .map((a: any) => a.question_id);
 
-      // Get total number of questions
+      // Get total number of non-PHQ9 questions (NULL or not 'PHQ9')
       const { count } = await supabase
         .from('questions')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .or('category.is.null,category.neq.PHQ9');
 
-      // If user has answered all questions, show completion message
-      if (count && answeredIds.length >= count) {
+      // If user has answered all non-PHQ9 questions, show completion message
+      if (count && answeredNonPHQ9Ids.length >= count) {
         setCurrentQuestion(null);
         setSubmissionStatus('completed');
         setMotivationalQuote("🎉 Congratulations! You've answered all available questions.\n\nHead over to the History tab to review your journey of self-reflection.");
@@ -114,22 +121,29 @@ export default function HomeScreen() {
         return;
       }
 
-      // Get all questions that haven't been answered
+      // Get all non-PHQ9 questions that haven't been answered
       const { data: unansweredQuestions, error: questionError } = await supabase
         .from('questions')
-        .select('*');
+        .select('*')
+        .or('category.is.null,category.neq.PHQ9');
 
       if (questionError) {
         throw questionError;
       }
 
       // Filter out answered questions
-      const availableQuestions = unansweredQuestions.filter(
-        q => !answeredIds.includes(q.id)
+      const availableQuestions = (unansweredQuestions || []).filter(
+        q => !answeredNonPHQ9Ids.includes(q.id)
       );
 
       if (!availableQuestions.length) {
-        throw new Error('No questions available');
+        // No questions available - show motivational quote
+        setCurrentQuestion(null);
+        setSubmissionStatus('completed');
+        const randomQuoteIndex = Math.floor(Math.random() * motivationalQuotes.length);
+        setMotivationalQuote(motivationalQuotes[randomQuoteIndex] + "\n\nYou've answered all available questions! Check back later for more.");
+        setIsLoading(false);
+        return;
       }
 
       // Get a random question from the unanswered ones
@@ -139,7 +153,12 @@ export default function HomeScreen() {
       setCurrentQuestion(newQuestion[0]);
     } catch (error) {
       console.error('Error loading question:', error);
-      Alert.alert('Error', 'Failed to load question. Please try again.');
+      // Show motivational quote instead of error alert
+      setCurrentQuestion(null);
+      setSubmissionStatus('completed');
+      const randomQuoteIndex = Math.floor(Math.random() * motivationalQuotes.length);
+      setMotivationalQuote(motivationalQuotes[randomQuoteIndex]);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
