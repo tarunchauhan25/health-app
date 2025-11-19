@@ -38,6 +38,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="sensors"
+        options={{
+          title: 'Sensors',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="sensor.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'History',
