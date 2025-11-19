@@ -501,9 +501,26 @@ export default function SensorsScreen() {
                 <View style={styles.dataRow}>
                   <ThemedText style={styles.label}>Speed:</ThemedText>
                   <ThemedText style={styles.value}>
-                    {location.speed ? `${location.speed.toFixed(2)} m/s` : 'N/A'}
+                    {location.speed ? `${location.speed.toFixed(2)} m/s` : '0.00 m/s'}
                   </ThemedText>
                 </View>
+                
+                {/* GPS Status Info */}
+                <View style={styles.statusContainer}>
+                  <ThemedText style={styles.statusText}>
+                    📡 Updates: {locationUpdateCount} | Points: {locationHistory.length}
+                  </ThemedText>
+                  {lastLocationUpdate && (
+                    <ThemedText style={styles.statusText}>
+                      Last: {lastLocationUpdate.toLocaleTimeString()}
+                    </ThemedText>
+                  )}
+                </View>
+                
+                <ThemedText style={styles.infoText}>
+                  💡 Tip: GPS works best outdoors. Move at least 0.5m to see trail updates.
+                  {locationHistory.length < 2 && ' Start walking to see your path!'}
+                </ThemedText>
                 
                 {/* Location Trail */}
                 <ThemedText style={styles.chartTitle}>Movement Trail</ThemedText>
@@ -726,5 +743,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  statusContainer: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginVertical: 2,
   },
 });
