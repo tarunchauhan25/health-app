@@ -248,9 +248,10 @@ export default function StatusScreen() {
       activity = 'walking';
       confidence = Math.min(75, 50 + accelStd * 50);
       inactiveTimeRef.current = 0;
-    } else if (accelStd < 0.03 && speedMean < 0.2 && inactiveTimeRef.current > 120) {
+    } else if (accelStd < 0.03 && speedMean < 0.2 && inactiveTimeRef.current > 30) {
+      // Reduced from 120 to 30 seconds (more realistic)
       activity = 'sleeping';
-      confidence = Math.min(90, 60 + Math.min(inactiveTimeRef.current / 240, 1) * 30);
+      confidence = Math.min(90, 60 + Math.min(inactiveTimeRef.current / 120, 1) * 30);
     } else if (speedMean < 0.3) {
       activity = 'stationary';
       confidence = 55;
@@ -302,11 +303,13 @@ export default function StatusScreen() {
 
   const detectSleep = () => {
     const currentHour = new Date().getHours();
-    const isNightTime = currentHour >= 22 || currentHour <= 6;
-    const isInactive = inactiveTimeRef.current > 120;
-    const isQuiet = audioLevel < 10;
+    // Broader night time window: 9 PM to 8 AM
+    const isNightTime = currentHour >= 21 || currentHour <= 8;
+    // Reduced to 30 seconds instead of 120
+    const isInactive = inactiveTimeRef.current > 30;
+    const isQuiet = audioLevel < 15;
     const recentAccel = accelHistoryRef.current.slice(-20);
-    const isStill = recentAccel.length > 0 && recentAccel.every(mag => Math.abs(mag - 1) < 0.08);
+    const isStill = recentAccel.length > 0 && recentAccel.every(mag => Math.abs(mag - 1) < 0.1);
     const shouldSleep = isNightTime && isInactive && isQuiet && isStill;
     if (shouldSleep !== possibleSleeping) setPossibleSleeping(shouldSleep);
   };
@@ -538,6 +541,81 @@ export default function StatusScreen() {
                         {locationState.charAt(0).toUpperCase() + locationState.slice(1)}
                       </ThemedText>
                       <ThemedText style={styles.gridMetric}>{(speed * 3.6).toFixed(1)} km/h</ThemedText>
+                    </View>
+                  </BlurView>
+                </LinearGradient>
+              </View>
+            </Animated.View>
+          </View>
+
+          {/* Sleep Status Grid Row */}
+          <View style={styles.gridRow}>
+            {/* Sleep Status */}
+            <Animated.View style={[styles.gridItem, { opacity: fadeAnim }]}>
+              <View style={styles.liquidCard}>
+                <LinearGradient
+                  colors={possibleSleeping ? ['#8B5CF6', '#A78BFA', '#C4B5FD'] : ['#6B7280', '#9CA3AF', '#D1D5DB']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.liquidGradient}
+                >
+                  <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.liquidBlur}>
+                    <View style={styles.gridCardContent}>
+                      <View style={styles.gridIconBadge}>
+                        <LinearGradient
+                          colors={possibleSleeping ? ['#8B5CF6', '#A78BFA', '#C4B5FD'] : ['#6B7280', '#9CA3AF', '#D1D5DB']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.gridIconGradient}
+                        >
+                          <ThemedText style={styles.gridIconText}>
+                            {possibleSleeping ? 'SLEEP' : 'AWAKE'}
+                          </ThemedText>
+                        </LinearGradient>
+                      </View>
+                      <ThemedText style={styles.gridLabel}>SLEEP STATUS</ThemedText>
+                      <ThemedText style={styles.gridValue} numberOfLines={1} ellipsizeMode="tail">
+                        {possibleSleeping ? 'Sleeping' : 'Awake'}
+                      </ThemedText>
+                      <ThemedText style={styles.gridMetric}>
+                        {inactiveTime > 0 ? `${Math.floor(inactiveTime / 60)}m ${inactiveTime % 60}s` : 'Active'}
+                      </ThemedText>
+                    </View>
+                  </BlurView>
+                </LinearGradient>
+              </View>
+            </Animated.View>
+
+            {/* Inactivity Timer */}
+            <Animated.View style={[styles.gridItem, { opacity: fadeAnim }]}>
+              <View style={styles.liquidCard}>
+                <LinearGradient
+                  colors={inactiveTime > 60 ? ['#F59E0B', '#FBBF24', '#FCD34D'] : ['#10B981', '#34D399', '#6EE7B7']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.liquidGradient}
+                >
+                  <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.liquidBlur}>
+                    <View style={styles.gridCardContent}>
+                      <View style={styles.gridIconBadge}>
+                        <LinearGradient
+                          colors={inactiveTime > 60 ? ['#F59E0B', '#FBBF24', '#FCD34D'] : ['#10B981', '#34D399', '#6EE7B7']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.gridIconGradient}
+                        >
+                          <ThemedText style={styles.gridIconText}>
+                            {inactiveTime > 60 ? 'IDLE' : 'MOVE'}
+                          </ThemedText>
+                        </LinearGradient>
+                      </View>
+                      <ThemedText style={styles.gridLabel}>ACTIVITY</ThemedText>
+                      <ThemedText style={styles.gridValue} numberOfLines={1} ellipsizeMode="tail">
+                        {inactiveTime > 60 ? 'Inactive' : 'Active'}
+                      </ThemedText>
+                      <ThemedText style={styles.gridMetric}>
+                        {inactiveTime > 0 ? `${Math.floor(inactiveTime / 60)}:${(inactiveTime % 60).toString().padStart(2, '0')}` : '0:00'}
+                      </ThemedText>
                     </View>
                   </BlurView>
                 </LinearGradient>
