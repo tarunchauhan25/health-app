@@ -89,6 +89,51 @@ export default function ProfileScreen() {
               <Text style={styles.buttonText}>Logout</Text>
             </TouchableOpacity>
           </View>
+          
+          {/* Navigation Buttons */}
+          <View style={styles.navigationContainer}>
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)')}
+            >
+              <Text style={styles.navButtonText}>Go to home</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/phq9')}
+            >
+              <Text style={styles.navButtonText}>See your PHQ-9 score</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/sensors')}
+            >
+              <Text style={styles.navButtonText}>See live sensor data</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/status')}
+            >
+              <Text style={styles.navButtonText}>Check activity status</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/history')}
+            >
+              <Text style={styles.navButtonText}>View your history</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/explore')}
+            >
+              <Text style={styles.navButtonText}>Explore more info</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -172,5 +217,23 @@ const styles = StyleSheet.create({
   logoutButton: {
     marginTop: 20,
     backgroundColor: '#dc2626',
+  },
+  navigationContainer: {
+    marginTop: 30,
+    marginBottom: 20,
+    gap: 12,
+  },
+  navButton: {
+    backgroundColor: '#424242',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

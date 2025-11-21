@@ -4,9 +4,10 @@ import { Audio } from 'expo-av';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Platform, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
+import { Animated, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 // Activity Types
 type ActivityType = 'stationary' | 'walking' | 'running' | 'cycling' | 'sleeping' | 'unknown';
@@ -24,6 +25,9 @@ const screenWidth = Dimensions.get('window').width;
 export default function StatusScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  
+  // Router for navigation
+  const router = useRouter();
 
   // Sensor permissions
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
@@ -724,6 +728,51 @@ export default function StatusScreen() {
             </View>
           </Animated.View>
 
+          {/* Navigation Buttons */}
+          <View style={styles.navigationContainer}>
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)')}
+            >
+              <Text style={styles.navButtonText}>Go to home</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/phq9')}
+            >
+              <Text style={styles.navButtonText}>See your PHQ-9 score</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/sensors')}
+            >
+              <Text style={styles.navButtonText}>See live sensor data</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/history')}
+            >
+              <Text style={styles.navButtonText}>View your history</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/explore')}
+            >
+              <Text style={styles.navButtonText}>Explore more info</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <Text style={styles.navButtonText}>Go to profile</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={{ height: 40 }} />
         </ScrollView>
       </LinearGradient>
@@ -1056,5 +1105,23 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     fontStyle: 'italic',
     marginTop: 8,
+  },
+  navigationContainer: {
+    marginTop: 30,
+    marginBottom: 20,
+    gap: 12,
+  },
+  navButton: {
+    backgroundColor: '#424242',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

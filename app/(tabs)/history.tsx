@@ -1,8 +1,9 @@
 import { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Question = Database['public']['Tables']['questions']['Row'];
 type UserAnswer = Database['public']['Tables']['user_answers']['Row'] & {
@@ -18,6 +19,9 @@ type HistoryEntry = {
 export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  
+  // Router for navigation
+  const router = useRouter();
 
   // Fetch history whenever the screen is focused
   useFocusEffect(
@@ -99,6 +103,51 @@ export default function HistoryScreen() {
             <Text style={styles.pageText}>No history entries yet. Submit some answers on the Home page!</Text>
           )}
         </View>
+        
+        {/* Navigation Buttons */}
+        <View style={styles.navigationContainer}>
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)')}
+          >
+            <Text style={styles.navButtonText}>Go to home</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/phq9')}
+          >
+            <Text style={styles.navButtonText}>See your PHQ-9 score</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/sensors')}
+          >
+            <Text style={styles.navButtonText}>See live sensor data</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/status')}
+          >
+            <Text style={styles.navButtonText}>Check activity status</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/explore')}
+          >
+            <Text style={styles.navButtonText}>Explore more info</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/profile')}
+          >
+            <Text style={styles.navButtonText}>Go to profile</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -160,6 +209,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#424242',
     textAlign: 'center',
+  },
+  navigationContainer: {
+    marginTop: 30,
+    marginBottom: 20,
+    gap: 12,
+  },
+  navButton: {
+    backgroundColor: '#424242',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

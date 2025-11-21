@@ -1,5 +1,6 @@
 import { useUser } from '@/context/UserContext';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -47,6 +48,9 @@ export default function HomeScreen() {
 
   // Context
   const { user, addHistoryEntry, lastSubmissionDate, setLastSubmissionDate } = useUser();
+  
+  // Router for navigation
+  const router = useRouter();
 
   // Monitor session changes
   useEffect(() => {
@@ -338,6 +342,51 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+        
+        {/* Navigation Buttons */}
+        <View style={styles.navigationContainer}>
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/phq9')}
+          >
+            <Text style={styles.navButtonText}>See your PHQ-9 score</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/sensors')}
+          >
+            <Text style={styles.navButtonText}>See live sensor data</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/status')}
+          >
+            <Text style={styles.navButtonText}>Check activity status</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/history')}
+          >
+            <Text style={styles.navButtonText}>View your history</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/explore')}
+          >
+            <Text style={styles.navButtonText}>Explore more info</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => router.push('/(tabs)/profile')}
+          >
+            <Text style={styles.navButtonText}>Go to profile</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -459,5 +508,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     lineHeight: 24,
+  },
+  navigationContainer: {
+    marginTop: 30,
+    marginBottom: 20,
+    gap: 12,
+  },
+  navButton: {
+    backgroundColor: '#424242',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
