@@ -1,225 +1,54 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAudio } from '@/context/AudioContext';
-import * as Brightness from 'expo-brightness';
+import { useSensors } from '@/context/SensorsContext';
 import * as Device from 'expo-device';
-import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useState } from 'react';
-import { AppState, Dimensions, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
-interface SensorData {
-  x: number;
-  y: number;
-  z: number;
-}
-
-interface LocationData {
-  latitude: number;
-  longitude: number;
-  altitude: number | null;
-  accuracy: number | null;
-  speed: number | null;
-}
-
-interface HistoricalData {
-  timestamp: number;
-  value: number;
-}
-
-const MAX_HISTORY_POINTS = 50; // Keep last 50 data points
 const screenWidth = Dimensions.get('window').width;
 
 export default function SensorsScreen() {
-  // Accelerometer
-  const [accelerometerData, setAccelerometerData] = useState<SensorData>({ x: 0, y: 0, z: 0 });
-  const [accelerometerSubscription, setAccelerometerSubscription] = useState<any>(null);
-  
-  // Router for navigation
   const router = useRouter();
   
-  // Use shared audio context
-  const { audioLevel, audioHistory: sharedAudioHistory, isRecording, startRecording, stopRecording, hasPermission: audioPermission } = useAudio();
+  // Use global contexts
+  const {
+    accelerometerData,
+    accelHistoryX,
+    accelHistoryY,
+    accelHistoryZ,
+    location,
+    locationPermission,
+    locationHistory,
+    speedHistory,
+    locationUpdateCount,
+    lastLocationUpdate,
+    brightness,
+    brightnessHistory,
+    screenState,
+    sensorsEnabled,
+    setSensorsEnabled,
+  } = useSensors();
   
-  // Historical data for graphs
-  const [accelHistoryX, setAccelHistoryX] = useState<number[]>([]);
-  const [accelHistoryY, setAccelHistoryY] = useState<number[]>([]);
-  const [accelHistoryZ, setAccelHistoryZ] = useState<number[]>([]);
-  const [brightnessHistory, setBrightnessHistory] = useState<number[]>([]);
-  const [speedHistory, setSpeedHistory] = useState<number[]>([]);
-  const [locationHistory, setLocationHistory] = useState<{lat: number, lng: number}[]>([]);
-
-  // GPS/Location
-  const [location, setLocation] = useState<LocationData | null>(null);
-  const [locationPermission, setLocationPermission] = useState<boolean>(false);
-  const [locationUpdateCount, setLocationUpdateCount] = useState<number>(0);
-  const [lastLocationUpdate, setLastLocationUpdate] = useState<Date | null>(null);
-
-  // Light Sensor (via Brightness)
-  const [brightness, setBrightness] = useState<number>(0);
-
-  // Screen State
-  const [screenState, setScreenState] = useState<string>('active');
-
-  // Proximity (not directly available in Expo, using Device info as placeholder)
+  const { 
+    audioLevel, 
+    audioHistory: sharedAudioHistory, 
+    isRecording, 
+    hasPermission: audioPermission 
+  } = useAudio();
+  
+  // Device info
   const [deviceInfo, setDeviceInfo] = useState<string>('');
 
-  // Toggle sensors on/off
-  const [sensorsEnabled, setSensorsEnabled] = useState<boolean>(true);
-
-  // Request permissions on mount
   useEffect(() => {
-    requestPermissions();
     getDeviceInfo();
-    getBrightnessLevel();
-
-    // Monitor app state for screen on/off
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      setScreenState(nextAppState);
-    });
-
-    return () => {
-      subscription?.remove();
-    };
   }, []);
-
-  // Accelerometer
-  useEffect(() => {
-    if (sensorsEnabled) {
-      _subscribe();
-    } else {
-      _unsubscribe();
-    }
-    return () => _unsubscribe();
-  }, [sensorsEnabled]);
-
-  // Location tracking
-  useEffect(() => {
-    if (sensorsEnabled && locationPermission) {
-      startLocationTracking();
-    }
-  }, [sensorsEnabled, locationPermission]);
-
-  // Audio monitoring - use shared context
-  useEffect(() => {
-    if (sensorsEnabled && audioPermission && !isRecording) {
-      startRecording();
-    } else if (!sensorsEnabled && isRecording) {
-      stopRecording();
-    }
-  }, [sensorsEnabled, audioPermission]);
-
-  // Brightness monitoring
-  useEffect(() => {
-    if (sensorsEnabled) {
-      const interval = setInterval(() => {
-        getBrightnessLevel();
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [sensorsEnabled]);
-
-  const requestPermissions = async () => {
-    // Location permission
-    const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
-    setLocationPermission(locationStatus === 'granted');
-  };
 
   const getDeviceInfo = async () => {
     const info = `${Device.modelName || 'Unknown'} - ${Device.osName} ${Device.osVersion}`;
     setDeviceInfo(info);
-  };
-
-  const getBrightnessLevel = async () => {
-    try {
-      const brightnessLevel = await Brightness.getBrightnessAsync();
-      setBrightness(brightnessLevel);
-      
-      // Update history
-      setBrightnessHistory(prev => [...prev.slice(-MAX_HISTORY_POINTS + 1), brightnessLevel * 100]);
-    } catch (error) {
-      console.log('Brightness error:', error);
-    }
-  };
-
-  // Accelerometer functions
-  const _subscribe = () => {
-    Accelerometer.setUpdateInterval(100);
-    const subscription = Accelerometer.addListener((accelerometerData) => {
-      setAccelerometerData(accelerometerData);
-      
-      // Update history
-      setAccelHistoryX(prev => [...prev.slice(-MAX_HISTORY_POINTS + 1), accelerometerData.x]);
-      setAccelHistoryY(prev => [...prev.slice(-MAX_HISTORY_POINTS + 1), accelerometerData.y]);
-      setAccelHistoryZ(prev => [...prev.slice(-MAX_HISTORY_POINTS + 1), accelerometerData.z]);
-    });
-    setAccelerometerSubscription(subscription);
-  };
-
-  const _unsubscribe = () => {
-    accelerometerSubscription && accelerometerSubscription.remove();
-    setAccelerometerSubscription(null);
-  };
-
-  // Location functions
-  const startLocationTracking = async () => {
-    try {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.BestForNavigation,
-      });
-      setLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        altitude: location.coords.altitude,
-        accuracy: location.coords.accuracy,
-        speed: location.coords.speed,
-      });
-      
-      // Add initial location to history
-      setLocationHistory([{ lat: location.coords.latitude, lng: location.coords.longitude }]);
-
-      // Watch position for live updates
-      await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: 500, // Update more frequently (500ms)
-          distanceInterval: 0.5, // Trigger on 0.5 meter movement (more sensitive)
-        },
-        (newLocation) => {
-          const newLat = newLocation.coords.latitude;
-          const newLng = newLocation.coords.longitude;
-          
-          setLocation({
-            latitude: newLat,
-            longitude: newLng,
-            altitude: newLocation.coords.altitude,
-            accuracy: newLocation.coords.accuracy,
-            speed: newLocation.coords.speed,
-          });
-          
-          // Track update count and timestamp
-          setLocationUpdateCount(prev => prev + 1);
-          setLastLocationUpdate(new Date());
-          
-          // Only add to history if location actually changed
-          setLocationHistory(prev => {
-            const lastPoint = prev[prev.length - 1];
-            if (!lastPoint || lastPoint.lat !== newLat || lastPoint.lng !== newLng) {
-              return [...prev.slice(-MAX_HISTORY_POINTS + 1), { lat: newLat, lng: newLng }];
-            }
-            return prev;
-          });
-          
-          // Update speed history
-          const speedValue = newLocation.coords.speed || 0;
-          setSpeedHistory(prev => [...prev.slice(-MAX_HISTORY_POINTS + 1), speedValue]);
-        }
-      );
-    } catch (error) {
-      console.log('Location error:', error);
-    }
   };
 
   // Chart configuration

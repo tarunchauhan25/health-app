@@ -9,7 +9,17 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "audio",
+          "fetch"
+        ],
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs continuous access to your location for sensor data collection and health monitoring.",
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location for sensor data collection.",
+        "NSLocationAlwaysUsageDescription": "This app needs continuous access to your location for sensor data collection and health monitoring."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,9 +34,12 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
         "RECORD_AUDIO",
         "ACCESS_NETWORK_STATE",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -52,7 +65,9 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location for sensor data collection.",
           "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to access your location for sensor data collection.",
-          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location for sensor data collection."
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location for sensor data collection.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       [
@@ -60,7 +75,9 @@
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for audio sensor data."
         }
-      ]
+      ],
+      "expo-task-manager",
+      "expo-background-fetch"
     ],
     "experiments": {
       "typedRoutes": true,

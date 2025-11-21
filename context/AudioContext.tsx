@@ -24,7 +24,23 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     requestPermission();
+    
+    // Auto-start recording when permission is granted
+    return () => {
+      // Cleanup on unmount
+      if (recordingRef.current) {
+        stopRecording();
+      }
+    };
   }, []);
+  
+  // Auto-start recording when permission is available
+  useEffect(() => {
+    if (hasPermission && !isRecording) {
+      console.log('Auto-starting audio recording...');
+      startRecording();
+    }
+  }, [hasPermission]);
 
   const requestPermission = async () => {
     const { status } = await Audio.requestPermissionsAsync();

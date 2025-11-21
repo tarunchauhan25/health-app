@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { AudioProvider } from '@/context/AudioContext';
+import { SensorsProvider } from '@/context/SensorsContext';
 import { UserProvider } from '@/context/UserContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -21,11 +22,13 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <UserProvider>
           <AudioProvider>
-            <Stack>
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            </Stack>
+            <SensorsProvider>
+              <Stack>
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              </Stack>
+            </SensorsProvider>
           </AudioProvider>
         </UserProvider>
         <StatusBar style="auto" />
