@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Audio } from 'expo-av';
+import { useAudio } from '@/context/AudioContext';
 import * as Brightness from 'expo-brightness';
 import * as Device from 'expo-device';
 import * as Location from 'expo-location';
@@ -40,11 +40,13 @@ export default function SensorsScreen() {
   // Router for navigation
   const router = useRouter();
   
+  // Use shared audio context
+  const { audioLevel, audioHistory: sharedAudioHistory, isRecording, startRecording, stopRecording, hasPermission: audioPermission } = useAudio();
+  
   // Historical data for graphs
   const [accelHistoryX, setAccelHistoryX] = useState<number[]>([]);
   const [accelHistoryY, setAccelHistoryY] = useState<number[]>([]);
   const [accelHistoryZ, setAccelHistoryZ] = useState<number[]>([]);
-  const [audioHistory, setAudioHistory] = useState<number[]>([]);
   const [brightnessHistory, setBrightnessHistory] = useState<number[]>([]);
   const [speedHistory, setSpeedHistory] = useState<number[]>([]);
   const [locationHistory, setLocationHistory] = useState<{lat: number, lng: number}[]>([]);
@@ -54,12 +56,6 @@ export default function SensorsScreen() {
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [locationUpdateCount, setLocationUpdateCount] = useState<number>(0);
   const [lastLocationUpdate, setLastLocationUpdate] = useState<Date | null>(null);
-
-  // Microphone (Audio Level)
-  const [audioPermission, setAudioPermission] = useState<boolean>(false);
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [audioLevel, setAudioLevel] = useState<number>(0);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
   // Light Sensor (via Brightness)
   const [brightness, setBrightness] = useState<number>(0);
@@ -106,24 +102,13 @@ export default function SensorsScreen() {
     }
   }, [sensorsEnabled, locationPermission]);
 
-  // Audio monitoring - auto start
+  // Audio monitoring - use shared context
   useEffect(() => {
-    let mounted = true;
-    
-    const setupAudio = async () => {
-      if (sensorsEnabled && audioPermission && !isRecording && mounted) {
-        await startRecording();
-      }
-    };
-    
-    setupAudio();
-    
-    return () => {
-      mounted = false;
-      if (recording) {
-        stopRecording();
-      }
-    };
+    if (sensorsEnabled && audioPermission && !isRecording) {
+      startRecording();
+    } else if (!sensorsEnabled && isRecording) {
+      stopRecording();
+    }
   }, [sensorsEnabled, audioPermission]);
 
   // Brightness monitoring
@@ -140,10 +125,6 @@ export default function SensorsScreen() {
     // Location permission
     const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
     setLocationPermission(locationStatus === 'granted');
-
-    // Audio permission
-    const { status: audioStatus } = await Audio.requestPermissionsAsync();
-    setAudioPermission(audioStatus === 'granted');
   };
 
   const getDeviceInfo = async () => {
@@ -241,70 +222,6 @@ export default function SensorsScreen() {
     }
   };
 
-  // Audio recording for microphone monitoring
-  const startRecording = async () => {
-    try {
-      if (!audioPermission) {
-        console.log('Audio permission not granted');
-        return;
-      }
-      
-      // If already recording, don't start again
-      if (recording || isRecording) {
-        console.log('Already recording, skipping...');
-        return;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        (status) => {
-          if (status.isRecording && status.metering !== undefined) {
-            // Normalize metering value (typically -160 to 0)
-            const normalized = Math.max(0, Math.min(100, (status.metering + 160) / 1.6));
-            setAudioLevel(normalized);
-            
-            // Update audio history
-            setAudioHistory(prev => [...prev.slice(-MAX_HISTORY_POINTS + 1), normalized]);
-          }
-        },
-        100 // Update interval in ms
-      );
-
-      setRecording(newRecording);
-      setIsRecording(true);
-      console.log('Recording started successfully');
-    } catch (error) {
-      console.log('Note: Audio monitoring may have limitations on this device');
-      // Don't show error to user since monitoring still works
-    }
-  };
-
-  const stopRecording = async () => {
-    if (!recording) {
-      console.log('No recording to stop');
-      return;
-    }
-
-    try {
-      await recording.stopAndUnloadAsync();
-      setRecording(null);
-      setIsRecording(false);
-      setAudioLevel(0);
-      console.log('Recording stopped successfully');
-    } catch (error) {
-      console.log('Note: Recording cleanup completed');
-      // Clear state anyway
-      setRecording(null);
-      setIsRecording(false);
-      setAudioLevel(0);
-    }
-  };
-
   // Chart configuration
   const chartConfig = {
     backgroundColor: '#1E2923',
@@ -376,13 +293,13 @@ export default function SensorsScreen() {
   };
 
   const renderAudioWaveform = () => {
-    if (audioHistory.length < 2) {
+    if (sharedAudioHistory.length < 2) {
       return <ThemedText style={styles.infoText}>Start monitoring to see waveform...</ThemedText>;
     }
 
     return (
       <View style={styles.waveformContainer}>
-        {audioHistory.slice(-30).map((level, index) => (
+        {sharedAudioHistory.slice(-30).map((level, index) => (
           <View
             key={index}
             style={[
@@ -587,10 +504,10 @@ export default function SensorsScreen() {
               {renderAudioWaveform()}
               
               {/* Audio History Chart */}
-              {audioHistory.length > 1 && (
+              {sharedAudioHistory.length > 1 && (
                 <>
                   <ThemedText style={styles.chartTitle}>Audio Level History</ThemedText>
-                  {renderLineChart(audioHistory, 'Audio Level', 'rgba(75, 192, 192, 1)')}
+                  {renderLineChart(sharedAudioHistory, 'Audio Level', 'rgba(75, 192, 192, 1)')}
                 </>
               )}
             </>

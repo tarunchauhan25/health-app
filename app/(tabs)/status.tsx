@@ -1,12 +1,13 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Audio } from 'expo-av';
+import { useAudio } from '@/context/AudioContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 // Activity Types
@@ -29,15 +30,16 @@ export default function StatusScreen() {
   // Router for navigation
   const router = useRouter();
 
+  // Get shared audio recording from context
+  const { audioLevel: sharedAudioLevel, audioHistory: sharedAudioHistory, hasPermission: audioPermission } = useAudio();
+
   // Sensor permissions
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
-  const [audioPermission, setAudioPermission] = useState<boolean>(false);
 
   // Current sensor readings
   const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0, z: 0 });
   const [speed, setSpeed] = useState<number>(0);
   const [rawSpeed, setRawSpeed] = useState<number>(0);
-  const [audioLevel, setAudioLevel] = useState<number>(0);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [gpsAccuracy, setGpsAccuracy] = useState<number>(999);
 
@@ -59,8 +61,7 @@ export default function StatusScreen() {
   const [audioHistory, setAudioHistory] = useState<number[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityStatus[]>([]);
 
-  // Recording state
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  // Monitoring state
   const [isMonitoring, setIsMonitoring] = useState<boolean>(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   const accelSubscription = useRef<any>(null);
@@ -111,16 +112,20 @@ export default function StatusScreen() {
   // Permissions and monitoring setup
   useEffect(() => {
     requestPermissions();
-    return () => {
-      stopMonitoring();
-    };
   }, []);
 
-  useEffect(() => {
-    if (locationPermission && audioPermission && !isMonitoring) {
-      startMonitoring();
-    }
-  }, [locationPermission, audioPermission]);
+  // Start/stop monitoring based on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      if (locationPermission && audioPermission) {
+        startMonitoring();
+      }
+      
+      return () => {
+        stopMonitoring();
+      };
+    }, [locationPermission, audioPermission])
+  );
 
   useEffect(() => {
     if (!isMonitoring) return;
@@ -141,8 +146,6 @@ export default function StatusScreen() {
   const requestPermissions = async () => {
     const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
     setLocationPermission(locationStatus === 'granted');
-    const { status: audioStatus } = await Audio.requestPermissionsAsync();
-    setAudioPermission(audioStatus === 'granted');
   };
 
   const startMonitoring = async () => {
@@ -181,42 +184,18 @@ export default function StatusScreen() {
       console.log('Location error:', error);
     }
 
-    // Audio monitoring with proper error handling
-    if (!recording) {
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-        const { recording: rec } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY,
-          (status) => {
-            if (status.isRecording && status.metering !== undefined) {
-              const normalized = Math.max(0, Math.min(100, (status.metering + 160) / 1.6));
-              setAudioLevel(normalized);
-              audioHistoryRef.current = [...audioHistoryRef.current.slice(-100), normalized];
-            }
-          },
-          100
-        );
-        setRecording(rec);
-        console.log('Audio monitoring started successfully');
-      } catch (error) {
-        console.log('Note: Audio monitoring may have limitations on this device');
-        // Don't show error to user since other sensors still work
-      }
-    }
+    // Audio monitoring is handled by shared AudioContext
+    // Just set monitoring flag
+    setIsMonitoring(true);
+    console.log('Status: Monitoring started (using shared audio context)');
   };
 
   const stopMonitoring = async () => {
     setIsMonitoring(false);
     if (accelSubscription.current) accelSubscription.current.remove();
     if (locationSubscription.current) locationSubscription.current.remove();
-    if (recording) {
-      try {
-        await recording.stopAndUnloadAsync();
-      } catch (error) {}
-    }
+    // Audio recording is managed by shared AudioContext, not stopped here
+    console.log('Status: Monitoring stopped');
   };
 
   // Classification functions (keeping existing logic)
@@ -275,7 +254,8 @@ export default function StatusScreen() {
   };
 
   const detectConversation = () => {
-    const recentAudio = audioHistoryRef.current.slice(-50);
+    // Use shared audio history from context
+    const recentAudio = sharedAudioHistory.slice(-50);
     if (recentAudio.length < 20) return;
     const audioMean = recentAudio.reduce((a, b) => a + b, 0) / recentAudio.length;
     const threshold = audioMean + 8;
@@ -311,7 +291,7 @@ export default function StatusScreen() {
     const isNightTime = currentHour >= 21 || currentHour <= 8;
     // Reduced to 30 seconds instead of 120
     const isInactive = inactiveTimeRef.current > 30;
-    const isQuiet = audioLevel < 15;
+    const isQuiet = sharedAudioLevel < 15;
     const recentAccel = accelHistoryRef.current.slice(-20);
     const isStill = recentAccel.length > 0 && recentAccel.every(mag => Math.abs(mag - 1) < 0.1);
     const shouldSleep = isNightTime && isInactive && isQuiet && isStill;
@@ -509,7 +489,7 @@ export default function StatusScreen() {
                       <ThemedText style={styles.gridValue} numberOfLines={1} ellipsizeMode="tail">
                         {conversationState === 'silent' ? 'Silent' : conversationState === 'talking' ? 'Talking' : 'Active'}
                       </ThemedText>
-                      <ThemedText style={styles.gridMetric}>{audioLevel.toFixed(0)} dB</ThemedText>
+                      <ThemedText style={styles.gridMetric}>{sharedAudioLevel.toFixed(0)} dB</ThemedText>
                     </View>
                   </BlurView>
                 </LinearGradient>
