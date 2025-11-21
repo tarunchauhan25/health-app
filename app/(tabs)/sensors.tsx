@@ -370,8 +370,9 @@ export default function SensorsScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+    
+      <ThemedView style={styles.container}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
         <ThemedText type="title" style={styles.title}>Sensor Data</ThemedText>
         
         <View style={styles.toggleContainer}>
@@ -609,6 +610,7 @@ export default function SensorsScreen() {
 
       </ScrollView>
     </ThemedView>
+    
   );
 }
 

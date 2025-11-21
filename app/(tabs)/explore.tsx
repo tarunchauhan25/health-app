@@ -5,7 +5,8 @@ export default function ExploreScreen() {
   const router = useRouter();
   
   return (
-    <View style={styles.outerContainer}>
+    
+      <View style={styles.outerContainer}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Explore</Text>
       </View>
@@ -62,6 +63,7 @@ export default function ExploreScreen() {
         </View>
       </ScrollView>
     </View>
+    
   );
 }
 

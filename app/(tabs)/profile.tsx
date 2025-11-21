@@ -37,10 +37,11 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.outerContainer}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
+    
+      <View style={styles.outerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.contentContainer}>
           <View style={styles.infoSection}>
@@ -137,6 +138,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
     </View>
+    
   );
 }
 

@@ -359,11 +359,12 @@ export default function StatusScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <LinearGradient
-        colors={isDark ? ['#0F172A', '#1E293B', '#334155'] : ['#F8FAFC', '#E2E8F0', '#CBD5E1']}
-        style={styles.background}
-      >
+    
+      <ThemedView style={styles.container}>
+        <LinearGradient
+          colors={isDark ? ['#0F172A', '#1E293B', '#334155'] : ['#F8FAFC', '#E2E8F0', '#CBD5E1']}
+          style={styles.background}
+        >
         <ScrollView 
           style={styles.scrollView} 
           contentContainerStyle={styles.contentContainer}
@@ -757,6 +758,7 @@ export default function StatusScreen() {
         </ScrollView>
       </LinearGradient>
     </ThemedView>
+    
   );
 }
 

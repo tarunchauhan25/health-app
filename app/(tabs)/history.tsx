@@ -83,10 +83,11 @@ export default function HistoryScreen() {
   );
 
   return (
-    <View style={styles.outerContainer}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>History</Text>
-      </View>
+    
+      <View style={styles.outerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>History</Text>
+        </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.contentContainer}>
           {loading ? (
@@ -150,6 +151,7 @@ export default function HistoryScreen() {
         </View>
       </ScrollView>
     </View>
+    
   );
 }
 

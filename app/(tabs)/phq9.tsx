@@ -238,10 +238,11 @@ export default function PHQ9Screen() {
   }
 
   return (
-    <View style={styles.outerContainer}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>PHQ-9</Text>
-      </View>
+    
+      <View style={styles.outerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>PHQ-9</Text>
+        </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.contentContainer}>
           {surveyState === 'start' && (
@@ -384,6 +385,7 @@ export default function PHQ9Screen() {
         </View>
       </ScrollView>
     </View>
+    
   );
 }
 
