@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { AudioProvider } from '@/context/AudioContext';
 import { SensorsProvider } from '@/context/SensorsContext';
 import { UserProvider } from '@/context/UserContext';
+import { WellbeingProvider } from '@/context/WellbeingContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -23,11 +24,13 @@ export default function RootLayout() {
         <UserProvider>
           <AudioProvider>
             <SensorsProvider>
-              <Stack>
-                <Stack.Screen name="login" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-              </Stack>
+              <WellbeingProvider>
+                <Stack>
+                  <Stack.Screen name="login" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                </Stack>
+              </WellbeingProvider>
             </SensorsProvider>
           </AudioProvider>
         </UserProvider>

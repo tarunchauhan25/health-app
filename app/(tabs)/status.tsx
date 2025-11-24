@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAudio } from '@/context/AudioContext';
+import { useWellbeingDataCollection } from '@/hooks/useWellbeingDataCollection';
 import { useFocusEffect } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -72,6 +73,25 @@ export default function StatusScreen() {
   const [inactiveTime, setInactiveTime] = useState<number>(0);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
+  // Track conversation duration for wellbeing
+  const conversationDurationRef = useRef<number>(0);
+  const lastConversationStateRef = useRef<ConversationState>('silent');
+  const lastConversationChangeRef = useRef<Date>(new Date());
+  
+  // Use wellbeing data collection hook
+  useWellbeingDataCollection(
+    currentActivity ? {
+      activity: currentActivity,
+      confidence: activityConfidence,
+      timestamp: new Date(),
+    } : undefined,
+    conversationState !== lastConversationStateRef.current ? {
+      state: conversationState,
+      timestamp: new Date(),
+      duration: conversationDurationRef.current,
+    } : undefined
+  );
+  
   // Animation values
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -139,9 +159,24 @@ export default function StatusScreen() {
       setSpeedHistory([...speedHistoryRef.current]);
       setAudioHistory([...audioHistoryRef.current]);
       setActivityHistory([...activityHistoryRef.current]);
+      
+      // Track conversation duration for wellbeing
+      if (conversationState === 'talking' || conversationState === 'conversation') {
+        if (lastConversationStateRef.current !== conversationState) {
+          lastConversationChangeRef.current = new Date();
+          lastConversationStateRef.current = conversationState;
+        }
+        conversationDurationRef.current = 
+          (new Date().getTime() - lastConversationChangeRef.current.getTime()) / 1000;
+      } else {
+        if (lastConversationStateRef.current !== 'silent') {
+          lastConversationStateRef.current = 'silent';
+          conversationDurationRef.current = 0;
+        }
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [isMonitoring]);
+  }, [isMonitoring, conversationState]);
 
   const requestPermissions = async () => {
     const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();

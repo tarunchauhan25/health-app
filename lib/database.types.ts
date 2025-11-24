@@ -84,6 +84,70 @@ export interface Database {
           created_at?: string
         }
       }
+      wellbeing_scores: {
+        Row: {
+          id: string
+          user_id: string
+          sleep_score: number
+          physical_activity_score: number
+          social_interaction_score: number
+          overall_score: number
+          last_updated: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sleep_score: number
+          physical_activity_score: number
+          social_interaction_score: number
+          overall_score: number
+          last_updated?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sleep_score?: number
+          physical_activity_score?: number
+          social_interaction_score?: number
+          overall_score?: number
+          last_updated?: string
+          created_at?: string
+        }
+      }
+      wellbeing_daily_scores: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          sleep_score: number
+          physical_activity_score: number
+          social_interaction_score: number
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          date: string
+          sleep_score: number
+          physical_activity_score: number
+          social_interaction_score: number
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          date?: string
+          sleep_score?: number
+          physical_activity_score?: number
+          social_interaction_score?: number
+          updated_at?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
