@@ -77,6 +77,10 @@ To generate a standalone APK for Android:
 
 ---
 
+## To be completed
+1. Implement forgot password
+2. Implement change password
+
 ## Contributing
 1. Fork this repository
 2. Create a new branch (`git checkout -b feature/your-feature`)
